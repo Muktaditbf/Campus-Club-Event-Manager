@@ -1,0 +1,29 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/javascript-node:22
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    environment:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: campus
+      DB_NAME: campus_events_db
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    # Share the app container's network so the app reaches MySQL on localhost.
+    network_mode: service:app
+    environment:
+      MYSQL_ROOT_PASSWORD: campus
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # Loaded once, in order, the first time the database starts.
+      - ../database/01_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ../database/02_data.sql:/docker-entrypoint-initdb.d/02_data.sql:ro
+      - ../database/03_routines.sql:/docker-entrypoint-initdb.d/03_routines.sql:ro
+
+volumes:
+  mysql-data:

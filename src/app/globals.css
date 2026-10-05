@@ -1,0 +1,105 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-sidebar: var(--sidebar);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+}
+
+@theme {
+  --animate-fade-in: fade-in 0.15s ease-out;
+  --animate-pop-in: pop-in 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-in: slide-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes pop-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes slide-in {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+}
+
+:root {
+  --background: #f7f7f9;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --muted: #f1f1f4;
+  --muted-foreground: #6b6b76;
+  --subtle: #fafafb;
+  --border: #e6e6ea;
+  --input: #dcdce2;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --primary-soft: #eef0ff;
+  --sidebar: #ffffff;
+
+  --chart-1: #6366f1;
+  --chart-2: #10b981;
+  --chart-3: #f59e0b;
+  --chart-4: #ec4899;
+  --chart-5: #0ea5e9;
+  --chart-grid: #ececf0;
+  color-scheme: light;
+}
+
+.dark {
+  --background: #0b0b0f;
+  --foreground: #ececf1;
+  --card: #131318;
+  --muted: #1c1c23;
+  --muted-foreground: #9898a6;
+  --subtle: #101015;
+  --border: #26262f;
+  --input: #30303a;
+  --primary: #818cf8;
+  --primary-foreground: #0b0b0f;
+  --primary-soft: #1e1b4b;
+  --sidebar: #0f0f14;
+
+  --chart-1: #818cf8;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #f472b6;
+  --chart-5: #38bdf8;
+  --chart-grid: #23232c;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-feature-settings: "cv11", "ss01";
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 25%, transparent);
+}
+
+/* Thin, quiet scrollbars for tables and code blocks */
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--input) transparent;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}

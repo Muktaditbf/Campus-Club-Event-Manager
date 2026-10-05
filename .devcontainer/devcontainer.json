@@ -1,0 +1,21 @@
+{
+  "name": "Campus Club & Event Manager",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Web app", "onAutoForward": "openPreview" },
+    "3306": { "label": "MySQL", "onAutoForward": "silent" }
+  },
+  "postCreateCommand": "npm install",
+  "postAttachCommand": "bash scripts/codespace-start.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": ["bradlc.vscode-tailwindcss", "cweijan.vscode-mysql-client2"]
+    },
+    "codespaces": {
+      "openFiles": ["README.md"]
+    }
+  }
+}

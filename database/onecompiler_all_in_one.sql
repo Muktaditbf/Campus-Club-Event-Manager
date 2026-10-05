@@ -1,10 +1,32 @@
 -- ============================================================
+-- onecompiler_all_in_one.sql  (GENERATED - do not edit by hand)
+-- Built by scripts/build_onecompiler.py from the files in database/.
+-- Paste into https://onecompiler.com/mysql and run.
+-- ============================================================
+
+-- >>>>>>>>>> 01_schema.sql
+-- ============================================================
 -- CSE 364 - Database Systems Project
 -- Topic : Campus Club & Event Management System
 -- File  : 01_schema.sql (database + table definitions)
--- DBMS  : MySQL 8.0
+-- DBMS  : MySQL 8.0+
+-- Load order: 01_schema.sql -> 02_data.sql -> 03_routines.sql
 -- ============================================================
- 
+
+
+-- Drop in reverse dependency order so the script can be re-run.
+DROP VIEW  IF EXISTS v_event_summary;
+DROP TABLE IF EXISTS event_status_log;
+DROP TABLE IF EXISTS event_sponsors;
+DROP TABLE IF EXISTS sponsors;
+DROP TABLE IF EXISTS feedback;
+DROP TABLE IF EXISTS registrations;
+DROP TABLE IF EXISTS events;
+DROP TABLE IF EXISTS venues;
+DROP TABLE IF EXISTS memberships;
+DROP TABLE IF EXISTS clubs;
+DROP TABLE IF EXISTS students;
+
 -- 1. students
 CREATE TABLE students (
   student_id  INT NOT NULL AUTO_INCREMENT,
@@ -17,7 +39,7 @@ CREATE TABLE students (
   PRIMARY KEY (student_id),
   UNIQUE KEY uq_student_email (email)
 ) ENGINE=InnoDB;
- 
+
 -- 2. clubs
 CREATE TABLE clubs (
   club_id     INT NOT NULL AUTO_INCREMENT,
@@ -28,7 +50,7 @@ CREATE TABLE clubs (
   PRIMARY KEY (club_id),
   UNIQUE KEY uq_club_name (club_name)
 ) ENGINE=InnoDB;
- 
+
 -- 3. memberships (M:N students <-> clubs, carries a role)
 CREATE TABLE memberships (
   student_id  INT NOT NULL,
@@ -42,7 +64,7 @@ CREATE TABLE memberships (
   CONSTRAINT fk_mem_club FOREIGN KEY (club_id)
     REFERENCES clubs(club_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
- 
+
 -- 4. venues
 CREATE TABLE venues (
   venue_id    INT NOT NULL AUTO_INCREMENT,
@@ -53,7 +75,7 @@ CREATE TABLE venues (
   UNIQUE KEY uq_venue_name (venue_name),
   CONSTRAINT ck_venue_capacity CHECK (capacity > 0)
 ) ENGINE=InnoDB;
- 
+
 -- 5. events
 CREATE TABLE events (
   event_id    INT NOT NULL AUTO_INCREMENT,
@@ -74,7 +96,7 @@ CREATE TABLE events (
   CONSTRAINT fk_event_venue FOREIGN KEY (venue_id)
     REFERENCES venues(venue_id) ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB;
- 
+
 -- 6. registrations (one seat per student per event)
 CREATE TABLE registrations (
   reg_id        INT NOT NULL AUTO_INCREMENT,
@@ -90,7 +112,7 @@ CREATE TABLE registrations (
   CONSTRAINT fk_reg_student FOREIGN KEY (student_id)
     REFERENCES students(student_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
- 
+
 -- 7. feedback (one rating per student per event)
 CREATE TABLE feedback (
   feedback_id INT NOT NULL AUTO_INCREMENT,
@@ -108,7 +130,7 @@ CREATE TABLE feedback (
   CONSTRAINT fk_fb_student FOREIGN KEY (student_id)
     REFERENCES students(student_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
- 
+
 -- 8. sponsors
 CREATE TABLE sponsors (
   sponsor_id    INT NOT NULL AUTO_INCREMENT,
@@ -118,7 +140,7 @@ CREATE TABLE sponsors (
   PRIMARY KEY (sponsor_id),
   UNIQUE KEY uq_sponsor_name (sponsor_name)
 ) ENGINE=InnoDB;
- 
+
 -- 9. event_sponsors (M:N events <-> sponsors, carries the amount)
 CREATE TABLE event_sponsors (
   event_id    INT NOT NULL,
@@ -132,8 +154,9 @@ CREATE TABLE event_sponsors (
   CONSTRAINT fk_es_sponsor FOREIGN KEY (sponsor_id)
     REFERENCES sponsors(sponsor_id) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB;
- 
--- 10. event_status_log (filled automatically by a trigger)
+
+-- 10. event_status_log (filled automatically by a trigger; no FK so the
+--     history is kept even if an event row is later deleted)
 CREATE TABLE event_status_log (
   log_id      INT NOT NULL AUTO_INCREMENT,
   event_id    INT NOT NULL,
@@ -144,10 +167,12 @@ CREATE TABLE event_status_log (
   KEY ix_log_event (event_id)
 ) ENGINE=InnoDB;
 
+
+-- >>>>>>>>>> 02_data.sql
 -- ============================================================
 -- File : 02_data.sql (sample data for campus_events_db)
 -- ============================================================
- 
+
 INSERT INTO students (full_name, email, department, batch_year, joined_on, is_active) VALUES
 ('Ayaan Rahman',     'ayaan.rahman@campus.example',     'CSE',      2022, '2022-09-01', 1),
 ('Tahmina Sultana',  'tahmina.sultana@campus.example',  'CSE',      2022, '2022-09-01', 1),
@@ -164,7 +189,7 @@ INSERT INTO students (full_name, email, department, batch_year, joined_on, is_ac
 ('Rifat Kabir',      'rifat.kabir@campus.example',      'CSE',      2024, '2024-01-08', 1),
 ('Shabnam Parvin',   'shabnam.parvin@campus.example',   'BBA',      2024, '2024-01-08', 1),
 ('Nafis Imtiaz',     'nafis.imtiaz@campus.example',     'Civil',    2022, '2022-09-01', 0);
- 
+
 INSERT INTO clubs (club_name, category, description, founded_on) VALUES
 ('Programming Club',       'tech',     'Workshops, contests and hackathons for coders.',   '2019-02-10'),
 ('Robotics Society',       'tech',     'Builds and races small robots.',                   '2020-03-01'),
@@ -176,7 +201,7 @@ INSERT INTO clubs (club_name, category, description, founded_on) VALUES
 ('Business Club',          'academic', 'Startup pitches and industry talks.',              '2019-10-04'),
 ('Community Service Corps','social',   'Blood drives and charity work.',                   '2020-06-18'),
 ('Literary Society',       'academic', 'Poetry, essays and a yearly magazine.',            '2018-01-30');
- 
+
 INSERT INTO venues (venue_name, building, capacity) VALUES
 ('Main Auditorium',   'Academic Block A', 600),
 ('Seminar Hall A',    'Academic Block A', 120),
@@ -188,7 +213,7 @@ INSERT INTO venues (venue_name, building, capacity) VALUES
 ('Library Hall',      'Library',          150),
 ('Rooftop Arena',     'Student Centre',   200),
 ('Art Gallery Room',  'Arts Building',     80);
- 
+
 INSERT INTO events (club_id, venue_id, title, event_date, fee, max_seats, status) VALUES
 (1, 4, 'Intro to Git Workshop',        '2026-02-10 10:00:00',   0.00,  50, 'completed'),
 (1, 1, '24 Hour Hackathon',            '2026-03-14 09:00:00', 300.00, 100, 'completed'),
@@ -205,7 +230,7 @@ INSERT INTO events (club_id, venue_id, title, event_date, fee, max_seats, status
 (1, 8, 'AI Talk Series',               '2026-09-12 15:00:00',   0.00,  80, 'completed'),
 (2, 6, 'Robo Soccer Demo',             '2026-10-20 10:00:00', 100.00,  60, 'planned'),
 (4, 1, 'Winter Fest',                  '2026-12-05 17:00:00', 250.00, 400, 'planned');
- 
+
 INSERT INTO memberships (student_id, club_id, member_role, joined_on) VALUES
 (1,1,'president','2022-09-05'),(2,1,'executive','2022-09-12'),(5,1,'member','2023-01-10'),
 (9,1,'member','2023-02-01'),(13,1,'member','2024-01-15'),
@@ -217,7 +242,7 @@ INSERT INTO memberships (student_id, club_id, member_role, joined_on) VALUES
 (9,7,'member','2023-02-14'),(11,7,'president','2022-12-10'),
 (4,8,'president','2023-01-05'),(8,8,'executive','2023-01-25'),(14,8,'member','2024-03-03'),
 (8,9,'president','2023-02-10'),(14,9,'member','2024-03-04');
- 
+
 INSERT INTO registrations (event_id, student_id, registered_on, attended) VALUES
 (1,1,'2026-02-05 09:10:00',1),(1,2,'2026-02-05 11:20:00',1),(1,5,'2026-02-06 08:45:00',1),
 (1,9,'2026-02-06 13:00:00',1),(1,13,'2026-02-07 10:30:00',1),(1,3,'2026-02-07 16:05:00',0),
@@ -242,7 +267,7 @@ INSERT INTO registrations (event_id, student_id, registered_on, attended) VALUES
 (13,13,'2026-09-03 09:45:00',1),
 (14,2,'2026-09-25 10:00:00',0),(14,3,'2026-09-26 11:00:00',0),(14,11,'2026-09-27 15:30:00',0),
 (15,6,'2026-09-28 10:00:00',0),(15,10,'2026-09-28 10:30:00',0);
- 
+
 INSERT INTO feedback (event_id, student_id, rating, comment, given_on) VALUES
 (1,1,5,'Clear and practical.','2026-02-11'),(1,2,4,'Good pace.','2026-02-11'),(1,5,5,NULL,'2026-02-12'),
 (2,1,5,'Best event of the semester.','2026-03-15'),(2,2,4,'Great mentors.','2026-03-15'),
@@ -253,7 +278,7 @@ INSERT INTO feedback (event_id, student_id, rating, comment, given_on) VALUES
 (7,5,4,'Well organised.','2026-04-26'),(7,13,3,'Ground was wet.','2026-04-26'),
 (9,4,4,'Useful pitches.','2026-05-17'),(9,14,5,'Inspiring.','2026-05-17'),
 (10,8,5,'Well run.','2026-06-07');
- 
+
 INSERT INTO sponsors (sponsor_name, industry, contact_email) VALUES
 ('NovaTech Solutions', 'IT',         'events@novatech.example'),
 ('GreenLeaf Foods',    'Food',       'sponsor@greenleaf.example'),
@@ -265,15 +290,19 @@ INSERT INTO sponsors (sponsor_name, industry, contact_email) VALUES
 ('CloudNest Hosting',  'IT',         'edu@cloudnest.example'),
 ('Urban Threads',      'Fashion',    'brand@urbanthreads.example'),
 ('Delta Print House',  'Printing',   'orders@deltaprint.example');
- 
+
 INSERT INTO event_sponsors (event_id, sponsor_id, amount) VALUES
 (2,1,50000.00),(2,8,30000.00),(5,4,60000.00),(5,9,25000.00),(7,5,40000.00),(8,5,35000.00),
 (10,7,20000.00),(3,1,15000.00),(9,4,45000.00),(4,6,8000.00),(1,8,5000.00),(13,3,12000.00);
 
+-- >>>>>>>>>> 03_routines.sql
 -- ============================================================
--- File : 04_routines.sql (MySQL stored functions, procedures, cursor, triggers)
--- Run with the mysql client (DELIMITER is a client command).
+-- File : 03_routines.sql (stored functions, procedures, cursor, triggers)
+-- Run with the mysql client: DELIMITER is a client command that lets the
+-- BEGIN ... END bodies contain ';'. For OneCompiler use
+-- onecompiler_all_in_one.sql, which has the same routines without DELIMITER.
 -- ============================================================
+
 DROP FUNCTION  IF EXISTS fn_fill_rate;
 DROP FUNCTION  IF EXISTS fn_avg_rating;
 DROP PROCEDURE IF EXISTS sp_register_student;
@@ -282,8 +311,8 @@ DROP PROCEDURE IF EXISTS sp_club_revenue_report;
 DROP TRIGGER   IF EXISTS trg_events_status_log;
 DROP TRIGGER   IF EXISTS trg_reg_seat_check;
 DROP TRIGGER   IF EXISTS trg_feedback_attended;
- 
- 
+
+
 -- F1. Percentage of seats filled for an event.
 CREATE FUNCTION fn_fill_rate(p_event_id INT) RETURNS DECIMAL(5,1)
 READS SQL DATA
@@ -297,7 +326,7 @@ BEGIN
   END IF;
   RETURN ROUND(100 * v_taken / v_seats, 1);
 END;
- 
+
 -- F2. Average rating of an event, 0 when no feedback exists.
 CREATE FUNCTION fn_avg_rating(p_event_id INT) RETURNS DECIMAL(3,2)
 READS SQL DATA
@@ -306,7 +335,7 @@ BEGIN
   SELECT AVG(rating) INTO v_avg FROM feedback WHERE event_id = p_event_id;
   RETURN IFNULL(v_avg, 0.00);
 END;
- 
+
 -- P1. Register a student for an event with validation (IF / ELSEIF).
 CREATE PROCEDURE sp_register_student(IN p_event_id INT, IN p_student_id INT, OUT p_message VARCHAR(100))
 BEGIN
@@ -314,11 +343,17 @@ BEGIN
   DECLARE v_seats  INT;
   DECLARE v_taken  INT;
   DECLARE v_dup    INT;
+  DECLARE v_active TINYINT;
   SELECT status, max_seats INTO v_status, v_seats FROM events WHERE event_id = p_event_id;
+  SELECT is_active INTO v_active FROM students WHERE student_id = p_student_id;
   SELECT COUNT(*) INTO v_taken FROM registrations WHERE event_id = p_event_id;
   SELECT COUNT(*) INTO v_dup FROM registrations WHERE event_id = p_event_id AND student_id = p_student_id;
   IF v_status IS NULL THEN
     SET p_message = 'Event not found';
+  ELSEIF v_active IS NULL THEN
+    SET p_message = 'Student not found';
+  ELSEIF v_active = 0 THEN
+    SET p_message = 'Student is inactive';
   ELSEIF v_status <> 'planned' THEN
     SET p_message = CONCAT('Event is ', v_status, ', registration closed');
   ELSEIF v_dup > 0 THEN
@@ -331,14 +366,14 @@ BEGIN
     SET p_message = 'Registration successful';
   END IF;
 END;
- 
+
 -- P2. Cancel an event (the trigger below writes the log row).
 CREATE PROCEDURE sp_cancel_event(IN p_event_id INT)
 BEGIN
   UPDATE events SET status = 'cancelled' WHERE event_id = p_event_id AND status = 'planned';
   SELECT ROW_COUNT() AS events_cancelled;
 END;
- 
+
 -- P3. CURSOR: revenue per club = fee x attended registrations, plus sponsorship.
 CREATE PROCEDURE sp_club_revenue_report()
 BEGIN
@@ -349,11 +384,11 @@ BEGIN
   DECLARE v_spons DECIMAL(12,2);
   DECLARE cur_clubs CURSOR FOR SELECT club_id, club_name FROM clubs ORDER BY club_id;
   DECLARE CONTINUE HANDLER FOR NOT FOUND SET v_done = 1;
- 
+
   DROP TEMPORARY TABLE IF EXISTS tmp_club_revenue;
   CREATE TEMPORARY TABLE tmp_club_revenue (
     club_name VARCHAR(60), fee_income DECIMAL(12,2), sponsorship DECIMAL(12,2), total DECIMAL(12,2));
- 
+
   OPEN cur_clubs;
   read_loop: LOOP
     FETCH cur_clubs INTO v_club_id, v_club_name;
@@ -369,10 +404,10 @@ BEGIN
     INSERT INTO tmp_club_revenue VALUES (v_club_name, v_fees, v_spons, v_fees + v_spons);
   END LOOP;
   CLOSE cur_clubs;
- 
+
   SELECT * FROM tmp_club_revenue ORDER BY total DESC, club_name;
 END;
- 
+
 -- T1. AFTER UPDATE: log every status change of an event.
 CREATE TRIGGER trg_events_status_log AFTER UPDATE ON events
 FOR EACH ROW
@@ -382,7 +417,7 @@ BEGIN
     VALUES (OLD.event_id, OLD.status, NEW.status, NOW());
   END IF;
 END;
- 
+
 -- T2. BEFORE INSERT: block registrations once the event is full.
 CREATE TRIGGER trg_reg_seat_check BEFORE INSERT ON registrations
 FOR EACH ROW
@@ -395,7 +430,7 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Event is full: no seats left';
   END IF;
 END;
- 
+
 -- T3. BEFORE INSERT: only students who attended may leave feedback.
 CREATE TRIGGER trg_feedback_attended BEFORE INSERT ON feedback
 FOR EACH ROW
@@ -407,10 +442,239 @@ BEGIN
     SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Feedback allowed only after attending the event';
   END IF;
 END;
- 
 
--- ===== tests =====
-SELECT event_id, title, fn_fill_rate(event_id) AS fill_pct, fn_avg_rating(event_id) AS avg_rating FROM events WHERE event_id IN (1,2,6,14);
+
+-- >>>>>>>>>> queries.sql
+-- ============================================================
+-- File : queries.sql (31 queries on campus_events_db)
+-- Q1-Q10 single table | Q11-Q19 joins | Q20-Q27 subqueries | Q28-Q31 set, view, DML
+-- Note : Q30 and Q31 change data. Reload 02_data.sql to get the sample data back.
+-- ============================================================
+
+-- Q1. Events that are still planned, earliest first.
+SELECT event_id, title, event_date, fee
+  FROM events
+  WHERE status = 'planned'
+  ORDER BY event_date;
+
+-- Q2. Active CSE students.
+SELECT student_id, full_name, batch_year
+  FROM students
+  WHERE department = 'CSE' AND is_active = 1
+  ORDER BY batch_year, full_name;
+
+-- Q3. Events held between March and April 2026.
+SELECT event_id, title, event_date
+  FROM events
+  WHERE event_date BETWEEN '2026-03-01 00:00:00' AND '2026-04-30 23:59:59'
+  ORDER BY event_date;
+
+-- Q4. Society and Circle clubs in the tech, academic or cultural categories.
+SELECT club_id, club_name, category
+  FROM clubs
+  WHERE (club_name LIKE '%Society' OR club_name LIKE '%Circle') AND category IN ('tech','academic','cultural')
+  ORDER BY club_name;
+
+-- Q5. Fee statistics for completed events.
+SELECT COUNT(*) AS total_events, SUM(fee) AS total_fee, ROUND(AVG(fee),2) AS average_fee, MAX(fee) AS highest, MIN(fee) AS lowest
+  FROM events
+  WHERE status = 'completed';
+
+-- Q6. Number of events per status.
+SELECT status, COUNT(*) AS event_count
+  FROM events
+  GROUP BY status
+  ORDER BY event_count DESC;
+
+-- Q7. Clubs that organised more than one event.
+SELECT club_id, COUNT(*) AS events_held, SUM(max_seats) AS total_seats
+  FROM events
+  GROUP BY club_id
+  HAVING COUNT(*) > 1
+  ORDER BY events_held DESC;
+
+-- Q8. Price band for every event (CASE).
+SELECT title, fee, CASE WHEN fee = 0 THEN 'Free' WHEN fee < 200 THEN 'Low' ELSE 'Premium' END AS price_band
+  FROM events
+  ORDER BY fee DESC, title;
+
+-- Q9. Events per month with string and date functions.
+SELECT MONTHNAME(event_date) AS month_name, MONTH(event_date) AS mon, COUNT(*) AS events_held, GROUP_CONCAT(UPPER(LEFT(title, 10)) SEPARATOR ' | ') AS starts_with
+  FROM events
+  GROUP BY MONTH(event_date), MONTHNAME(event_date)
+  ORDER BY mon;
+
+-- Q10. Three most expensive events (ties broken by title).
+SELECT title, fee
+  FROM events
+  ORDER BY fee DESC, title
+  LIMIT 3;
+
+-- Q11. Event with its club and venue (three-table inner join).
+SELECT e.event_id, e.title, c.club_name, v.venue_name
+  FROM events e
+  INNER JOIN clubs c ON e.club_id = c.club_id
+  INNER JOIN venues v ON e.venue_id = v.venue_id
+  WHERE e.status = 'completed'
+  ORDER BY e.event_id;
+
+-- Q12. Registrations per event, including events nobody registered for (LEFT JOIN).
+SELECT e.event_id, e.title, COUNT(r.reg_id) AS registrations
+  FROM events e
+  LEFT JOIN registrations r ON e.event_id = r.event_id
+  GROUP BY e.event_id, e.title
+  ORDER BY registrations DESC, e.event_id;
+
+-- Q13. Clubs that have never organised an event.
+SELECT c.club_id, c.club_name
+  FROM clubs c
+  LEFT JOIN events e ON c.club_id = e.club_id
+  WHERE e.event_id IS NULL;
+
+-- Q14. Venues that have never been booked.
+SELECT v.venue_id, v.venue_name, v.capacity
+  FROM venues v
+  LEFT JOIN events e ON v.venue_id = e.venue_id
+  WHERE e.event_id IS NULL
+  ORDER BY v.venue_id;
+
+-- Q15. Club leaders (executives and presidents) with their clubs (join through the bridge table).
+SELECT s.full_name, c.club_name, m.member_role
+  FROM memberships m
+  INNER JOIN students s ON m.student_id = s.student_id
+  INNER JOIN clubs c ON m.club_id = c.club_id
+  WHERE m.member_role <> 'member'
+  ORDER BY c.club_name, m.member_role DESC;
+
+-- Q16. Total sponsorship raised per event.
+SELECT e.title, COUNT(es.sponsor_id) AS sponsors, SUM(es.amount) AS total_amount
+  FROM events e
+  INNER JOIN event_sponsors es ON e.event_id = es.event_id
+  GROUP BY e.event_id, e.title
+  ORDER BY total_amount DESC;
+
+-- Q17. Pairs of BBA students (self join).
+SELECT a.full_name AS student_one, b.full_name AS student_two
+  FROM students a
+  INNER JOIN students b ON a.department = b.department AND a.student_id < b.student_id
+  WHERE a.department = 'BBA'
+  ORDER BY a.student_id, b.student_id;
+
+-- Q18. Every sponsor with what they paid, unused sponsors kept (RIGHT JOIN).
+SELECT sp.sponsor_name, es.event_id, es.amount
+  FROM event_sponsors es
+  RIGHT JOIN sponsors sp ON es.sponsor_id = sp.sponsor_id
+  ORDER BY sp.sponsor_id, es.event_id;
+
+-- Q19. Attendance rate of each completed event.
+SELECT e.title, COUNT(*) AS registered, SUM(r.attended) AS attended, ROUND(100 * SUM(r.attended) / COUNT(*), 1) AS attendance_pct
+  FROM events e
+  JOIN registrations r ON e.event_id = r.event_id
+  WHERE e.status = 'completed'
+  GROUP BY e.event_id, e.title
+  ORDER BY attendance_pct DESC, e.title;
+
+-- Q20. Events that cost more than the average event (scalar subquery).
+SELECT event_id, title, fee
+  FROM events
+  WHERE fee > (SELECT AVG(fee) FROM events)
+  ORDER BY fee DESC;
+
+-- Q21. Students who registered for an event costing 250 or more (nested IN).
+SELECT student_id, full_name
+  FROM students
+  WHERE student_id IN (SELECT student_id FROM registrations WHERE event_id IN (SELECT event_id FROM events WHERE fee >= 250))
+  ORDER BY student_id;
+
+-- Q22. Students who never gave feedback (NOT IN).
+SELECT student_id, full_name, department
+  FROM students
+  WHERE student_id NOT IN (SELECT student_id FROM feedback)
+  ORDER BY student_id;
+
+-- Q23. Clubs with at least one completed event (EXISTS).
+SELECT c.club_id, c.club_name
+  FROM clubs c
+  WHERE EXISTS (SELECT 1 FROM events e WHERE e.club_id = c.club_id AND e.status = 'completed')
+  ORDER BY c.club_id;
+
+-- Q24. Events without any sponsor (NOT EXISTS).
+SELECT e.event_id, e.title, e.status
+  FROM events e
+  WHERE NOT EXISTS (SELECT 1 FROM event_sponsors es WHERE es.event_id = e.event_id)
+  ORDER BY e.event_id;
+
+-- Q25. Average rating of each event (correlated scalar subquery).
+SELECT e.event_id, e.title, (SELECT ROUND(AVG(f.rating),2) FROM feedback f WHERE f.event_id = e.event_id) AS avg_rating
+  FROM events e
+  WHERE e.status = 'completed'
+  ORDER BY avg_rating DESC, e.event_id;
+
+-- Q26. The most expensive event, found with ALL.
+SELECT event_id, title, fee, status
+  FROM events
+  WHERE fee >= ALL (SELECT fee FROM events);
+
+-- Q27. Clubs ranked by registrations using a derived table.
+SELECT d.club_name, d.total_registrations
+  FROM (SELECT c.club_name, COUNT(r.reg_id) AS total_registrations
+          FROM clubs c
+          JOIN events e ON c.club_id = e.club_id
+          JOIN registrations r ON e.event_id = r.event_id
+         GROUP BY c.club_id, c.club_name) AS d
+  WHERE d.total_registrations >= 6
+  ORDER BY d.total_registrations DESC;
+
+-- Q28. Club presidents and sponsors in one list (UNION).
+SELECT s.full_name AS name, 'Club president' AS type
+  FROM students s
+  JOIN memberships m ON s.student_id = m.student_id
+  WHERE m.member_role = 'president'
+UNION SELECT sponsor_name, 'Sponsor'
+  FROM sponsors
+  WHERE industry = 'IT'
+  ORDER BY type, name;
+
+-- Q29. A view that hides the join work.
+CREATE OR REPLACE VIEW v_event_summary AS
+SELECT e.event_id, e.title, c.club_name, v.venue_name, e.fee, e.status
+  FROM events e
+  JOIN clubs c ON e.club_id = c.club_id
+  LEFT JOIN venues v ON e.venue_id = v.venue_id;
+SELECT *
+  FROM v_event_summary
+  WHERE fee >= 200
+  ORDER BY fee DESC, event_id;
+
+-- Q30. Raise the fee 10% for planned events of tech clubs (UPDATE with subquery).
+UPDATE events
+  SET fee = fee * 1.10
+  WHERE status = 'planned' AND club_id IN (SELECT club_id FROM clubs WHERE category = 'tech');
+SELECT event_id, title, fee
+  FROM events
+  WHERE event_id = 14;
+
+-- Q31. Remove sponsors who sponsored nothing (DELETE with subquery).
+DELETE
+  FROM sponsors
+  WHERE sponsor_id NOT IN (SELECT sponsor_id FROM event_sponsors);
+SELECT COUNT(*) AS remaining_sponsors
+  FROM sponsors;
+
+-- >>>>>>>>>> demo.sql
+-- ============================================================
+-- File : demo.sql (quick checks for the routines in 03_routines.sql)
+-- Changes data: registers student 5 for event 14.
+-- ============================================================
+
+SELECT event_id, title, fn_fill_rate(event_id) AS fill_pct, fn_avg_rating(event_id) AS avg_rating
+  FROM events
+  WHERE event_id IN (1, 2, 6, 14);
+
 CALL sp_register_student(14, 5, @m1);
 SELECT @m1 AS result;
+
+CALL sp_register_student(14, 15, @m2);
+SELECT @m2 AS inactive_student_result;
+
 CALL sp_club_revenue_report();
