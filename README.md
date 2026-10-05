@@ -12,7 +12,8 @@ The web app lets you browse and edit all of it, run the stored procedures, watch
 
 1. Click **Open in GitHub Codespaces** above, or on GitHub go to **Code → Codespaces → Create codespace on main**.
 2. Wait for the setup to finish (about 2–3 minutes the first time). A MySQL 8.4 server starts and loads `01_schema.sql`, `02_data.sql` and `03_routines.sql`.
-3. The app starts by itself and opens in a preview tab on port **3000**. If it doesn't, open the **Ports** tab and click the globe icon next to port 3000.
+3. The app starts by itself and opens in a new browser tab. If it doesn't, open the **Ports** tab and click the globe icon (**Open in Browser**) next to port **3000**.
+   Don't use VS Code's built-in *Simple Browser* preview: it shows "github.com refused to connect" because it can't sign in to GitHub.
 
 When you're done, stop the codespace from <https://github.com/codespaces> so it doesn't use your free hours.
 
