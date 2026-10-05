@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: campus
+        ports: ["3306:3306"]
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pcampus"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    env:
+      DB_HOST: 127.0.0.1
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASSWORD: campus
+      DB_NAME: campus_events_db
+      MYSQL_PWD: campus
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Load schema, data and routines with the mysql client
+        run: |
+          for f in 01_schema 02_data 03_routines; do
+            echo "== $f.sql"; mysql -h 127.0.0.1 -u root < database/$f.sql
+          done
+
+      - name: Run the 31 queries and the routine demo
+        run: |
+          mysql -h 127.0.0.1 -u root --table < database/queries.sql | tee queries-output.txt
+          mysql -h 127.0.0.1 -u root --table < database/demo.sql | tee -a queries-output.txt
+
+      - name: OneCompiler file is up to date
+        run: |
+          python3 scripts/build_onecompiler.py
+          git diff --exit-code database/onecompiler_all_in_one.sql
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify SQL (OneCompiler file, reset path, routines, triggers)
+        run: npm run verify:sql
+
+      - name: Type check and build
+        run: npm run build
+
+      - name: Start the app
+        run: |
+          npm run start > app.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000 > /dev/null && exit 0; sleep 1; done
+          cat app.log; exit 1
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser test and screenshots
+        run: npm run screenshots
+
+      - name: Server log
+        if: always()
+        run: cat app.log || true
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: screenshots
+          path: |
+            screenshots-out/
+            queries-output.txt
