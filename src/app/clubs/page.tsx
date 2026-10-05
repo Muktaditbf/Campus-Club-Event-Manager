@@ -4,7 +4,7 @@ import { listClubs } from "@/lib/data";
 import { createClub } from "@/lib/actions";
 import { clubFields } from "@/lib/forms";
 import { CLUB_CATEGORIES } from "@/lib/types";
-import { cn, formatDate, titleCase } from "@/lib/utils";
+import { cn, formatDate, plural, titleCase } from "@/lib/utils";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
 import { CategoryBadge } from "@/components/badges";
 import { FormDialog } from "@/components/form-dialog";
@@ -85,10 +85,10 @@ export default async function ClubsPage({ searchParams }: { searchParams: Search
                 <p className="mt-2 line-clamp-2 min-h-10 text-sm text-muted-foreground">{c.description ?? "No description."}</p>
                 <div className="mt-5 flex items-center gap-4 text-xs text-muted-foreground">
                   <span className="inline-flex items-center gap-1.5">
-                    <Users className="size-3.5" /> {c.members} members
+                    <Users className="size-3.5" /> {plural(c.members, "member")}
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <CalendarDays className="size-3.5" /> {c.events} events
+                    <CalendarDays className="size-3.5" /> {plural(c.events, "event")}
                   </span>
                 </div>
                 <div className="mt-4 flex items-center justify-between border-t border-border pt-3 text-xs">

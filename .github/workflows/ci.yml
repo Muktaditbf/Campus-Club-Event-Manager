@@ -28,7 +28,7 @@ jobs:
       MYSQL_PWD: campus
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Load schema, data and routines with the mysql client
         run: |
@@ -46,7 +46,7 @@ jobs:
           python3 scripts/build_onecompiler.py
           git diff --exit-code database/onecompiler_all_in_one.sql
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
 
@@ -75,7 +75,7 @@ jobs:
         if: always()
         run: cat app.log || true
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: screenshots

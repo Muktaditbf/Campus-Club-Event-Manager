@@ -50,6 +50,19 @@ Many cards have a small **SQL** button that shows the statement behind them.
 
 Light and dark themes are included, and the layout works on phones.
 
+### Screenshots
+
+| | |
+|---|---|
+| ![Events](docs/screenshots/events-light.png) | ![Event page](docs/screenshots/event-detail-light.png) |
+| **Events** list with seat fill from `fn_fill_rate()` | **Event page**: registrations, attendance, feedback, sponsors |
+| ![Query Lab](docs/screenshots/query-lab-trigger-error.png) | ![Schema](docs/screenshots/schema-light.png) |
+| **Query Lab** showing a trigger rejecting an insert | **Schema** with ER diagram, keys and constraints |
+| ![Clubs](docs/screenshots/clubs-light.png) | ![Dark mode](docs/screenshots/dashboard-dark.png) |
+| **Clubs** | **Dark mode** |
+
+<p align="center"><img src="docs/screenshots/mobile-dashboard.png" width="260" alt="Phone layout"></p>
+
 ## The database
 
 ```

@@ -210,6 +210,8 @@ function Results({ result, pending }: { result: RunResult | null; pending: boole
 }
 
 function ResultView({ set }: { set: ResultSet }) {
+  // Right-align a column (header too) when its values are numbers.
+  const numeric = set.kind === "rows" ? set.columns.map((_, c) => set.rows.some((r) => typeof r[c] === "number")) : [];
   if (set.kind === "status") {
     return (
       <Card className="px-5 py-3 font-mono text-xs text-muted-foreground">
@@ -228,7 +230,10 @@ function ResultView({ set }: { set: ResultSet }) {
               {set.columns.map((c, i) => (
                 <th
                   key={i}
-                  className="whitespace-nowrap border-b border-border bg-subtle px-4 py-2 text-left font-mono text-[11px] font-medium text-muted-foreground"
+                  className={cn(
+                    "whitespace-nowrap border-b border-border bg-subtle px-4 py-2 text-left font-mono text-[11px] font-medium text-muted-foreground",
+                    numeric[i] && "text-right",
+                  )}
                 >
                   {c}
                 </th>
@@ -243,7 +248,7 @@ function ResultView({ set }: { set: ResultSet }) {
                     key={c}
                     className={cn(
                       "whitespace-nowrap border-b border-border px-4 py-2",
-                      typeof v === "number" && "tabular text-right",
+                      numeric[c] && "tabular text-right",
                     )}
                   >
                     {v === null ? <span className="italic text-muted-foreground/60">NULL</span> : String(v)}

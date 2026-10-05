@@ -36,7 +36,7 @@ export function formatDateTime(value: string | null | undefined) {
 
 export function monthLabel(yyyyMm: string) {
   const [y, m] = yyyyMm.split("-").map(Number);
-  return `${MONTHS[m - 1]} ${String(y).slice(2)}`;
+  return `${MONTHS[m - 1]} ’${String(y).slice(2)}`;
 }
 
 /** "2026-02-10 10:00:00" -> "2026-02-10T10:00" for <input type="datetime-local"> */
@@ -61,6 +61,10 @@ export function initials(name: string) {
     .slice(0, 2)
     .map((w) => w[0]!.toUpperCase())
     .join("");
+}
+
+export function plural(n: number, word: string, many = `${word}s`) {
+  return `${n} ${n === 1 ? word : many}`;
 }
 
 export function titleCase(value: string) {
